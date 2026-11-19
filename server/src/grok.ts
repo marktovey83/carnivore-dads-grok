@@ -143,15 +143,17 @@ export async function generateScanImage(key: string, scan: ScanBodyInput): Promi
       Authorization: `Bearer ${key}`,
     },
     body: JSON.stringify({
-      model: "grok-imagine-image",
+      model: "grok-imagine-image-2.0",
       prompt,
       n: 1,
+      aspect_ratio: "9:16",
     }),
   });
 
   const body: any = await res.json().catch(() => ({}));
   if (!res.ok) {
-    return { error: String(body?.error?.message || "image_failed"), status: res.status };
+    const msg = body?.error?.message || body?.message || JSON.stringify(body).slice(0, 200) || "image_failed";
+    return { error: String(msg), status: res.status };
   }
   const url = body?.data?.[0]?.url || body?.data?.[0]?.b64_json;
   if (!url) return { error: "no_image", status: 502 };
