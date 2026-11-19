@@ -65,7 +65,6 @@ export function Reset() {
   const nav = useNavigate();
   const [form, setForm] = useState({
     email: state.email,
-    occupation: state.occupation,
     height: state.height,
     weight: state.weight,
     ...state.address,
@@ -77,7 +76,7 @@ export function Reset() {
       <div className="screen">
         <BrandLockup country={state.country} />
         <h2 className="display">START YOUR RESET.</h2>
-        <p className="lede">Your numbers, your trade, and the way in. Phase 1 opens the moment this is done.</p>
+        <p className="lede">Your numbers and the way in. Phase 1 opens the moment this is done. Factory language for every dad.</p>
         <div className="split">
           <div className="price">
             $25 <span>/ WEEK</span>
@@ -88,14 +87,6 @@ export function Reset() {
         <p className="field">Your numbers</p>
         <label className="field">Email</label>
         <input value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="you@email.com" />
-        <label className="field">Occupation</label>
-        <select value={form.occupation} onChange={(e) => set("occupation", e.target.value)}>
-          <option value="">Choose your trade</option>
-          {["FIFO electrician", "Police", "Plumber / trades", "Truck / long haul", "Builder", "Office / desk", "Other"].map((t) => (
-            <option key={t}>{t}</option>
-          ))}
-        </select>
-        <p className="fine">Not small talk. This is the language every video and lesson gets written in.</p>
         <div className="stat-grid">
           <div>
             <label className="field">Height (cm)</label>
@@ -158,7 +149,6 @@ export function Reset() {
           onClick={() => {
             patch({
               email: form.email || "you@email.com",
-              occupation: form.occupation,
               height: form.height,
               weight: form.weight,
               address: form,
