@@ -9,9 +9,6 @@
     "check": "tsc --noEmit",
     "test": "node --test test/*.test.ts"
   },
-  "dependencies": {
-    "@anthropic-ai/sdk": "1.8.0"
-  },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261029.1",
     "typescript": "6.0.3",
