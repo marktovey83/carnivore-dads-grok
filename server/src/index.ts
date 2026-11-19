@@ -48,7 +48,15 @@ async function handle(req: Request, env: Env): Promise<Response> {
   const url = new URL(req.url);
 
   if (url.pathname === "/health") {
-    return json(200, { ok: true, provider: "grok", key_set: Boolean(env.GROK_API_KEY) });
+    const k = env.GROK_API_KEY || "";
+    return json(200, {
+      ok: true,
+      provider: "grok",
+      key_set: Boolean(k),
+      key_length: k.length,
+      key_prefix: k.slice(0, 8),
+      key_suffix: k.slice(-4),
+    });
   }
 
   if (req.method === "OPTIONS") {
