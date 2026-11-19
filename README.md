@@ -1,10 +1,10 @@
 # Carnivore Dads
 
-React build of the Carnivore Dads app — a five-phase men's health program for dads. Design system and copy come from the locked canvases. No Claude in this stack.
+React build of the Carnivore Dads app — a five-phase men's health teaching program for dads. Design system and copy come from the locked canvases. Education only.
 
-**Live (once Pages is on):** https://marktovey83.github.io/carnivore-dads/
+**Live:** https://marktovey83.github.io/carnivore-dads-grok/ (once Pages is enabled on this repo)
 
-**Repo:** https://github.com/marktovey83/carnivore-dads
+**Repo:** https://github.com/marktovey83/carnivore-dads-grok
 
 ## Design system (locked)
 
@@ -14,163 +14,48 @@ React build of the Carnivore Dads app — a five-phase men's health program for 
 - Countries: AU, NZ, UK, IE, US, CA, ZA
 - Mobile-first dad app, desktop admin
 
+## Current locks (2026-11-19)
+
+- **Factory metaphor only** for everyone. No occupation-specific language.
+- **No fixed time frame** on phases. Clients progress at their own speed.
+- **Phase 1 ketone baseline**: as many readings as they like on current diet. Every log captures time since last meal and time taken.
+- Education and advice only. Not treatment, not a prescription, not a diagnosis. GP owns medicine.
+- Profile / scan is a hard gate into later phases.
+
 ## What this build includes
 
 Dad flow
 
 1. Login: the lockup, the slogan, LOG IN or REGISTER, and the country plate
-2. Start your reset: trade, height, weight. Nothing else.
+2. Start your reset: height, weight. Nothing else required.
 3. My body: the phase picker, then Phase 1's kit, bloods, scan and lessons
 4. Your factory (parametric silhouette from scan numbers)
 5. Body scan entry
-6. Phase 1 videos: an intro on My body, then a lesson behind every one of the
-   seven kit plates
+6. Phase 1 videos: an intro on My body, then a lesson behind every one of the kit plates
 7. Tabs: Videos · Ketones · My body · Macros · Account (Shop opens from Account and My body)
 
 ## Phase 1 videos
 
-Every kit plate on My body has a lesson behind it, and the plate carries a
-WATCH mark so a man can see where the video is. The files live in `assets/`:
+Every kit plate on My body has a lesson behind it. The files live in `assets/`.
 
-| Plate | Route | File |
-| --- | --- | --- |
-| (intro, on My body) | `#/app/my-body/1` | `phase1-intro.mp4` |
-| Blood ketone meter | `#/app/kit/ketone-meter` | `phase1-ketone-meter.mp4` |
-| Mineralised salt | `#/app/kit/mineralised-salt` | `phase1-mineralised-salt.mp4` |
-| Fish oil | `#/app/kit/fish-oil` | `phase1-fish-oil.mp4` |
-| Magnesium glycinate | `#/app/kit/magnesium` | `phase1-magnesium.mp4` |
-| Smart watch | `#/app/kit/smart-watch` | `phase1-smart-watch.mp4` |
-| Gym membership | `#/app/kit/gym-membership` | `phase1-gym-membership.mp4` |
-| Body scan | `#/app/kit/body-scan` | `phase1-body-scan.mp4` |
+## Ketones
 
-The written points under each video are the narration, not a rewrite of it.
+Phase 1: log as many readings as you like. Each entry records:
+- mmol/L
+- Hours since last meal
+- Time taken
 
-The body scan plate used to open the entry form. It opens the lesson now, and
-the lesson leads to the form at `#/app/scan`, which My body still links on its
-own card, so the form did not move further away than one tap.
+That gives a clear starting picture before Phase 2.
 
-The videos are committed here, which is about 100MB of history. Before Phase 2
-is filmed that wants moving to a CDN, and the footage wants checking for stock
-watermarks at source: four of the seven needed a window cut out of them.
+## Grok API (scaffold)
 
-## The hub, after the production build
-
-My body, Ketones and Videos are one shell with different contents, so the
-phase a man is in means the same thing on all three. Each opens on the phase
-picker: Phase 1 to 4 and Graduate, with the one he is up to marked and the
-rest padlocked. A locked row says when it opens rather than doing nothing.
-The CD lockup is the way home to the picker.
-
-`#/app/my-body` opens the picker, `#/app/my-body/1` opens that phase. Same for
-`#/app/ketones` and `#/app/videos`.
-
-Account holds what Start your reset no longer asks for: email, delivery
-address and the local gyms and butchers consent box, off by default. None of
-it is needed to begin, so none of it is in the way of beginning. It is also
-the way back to the login.
-
-The craving screens were never built here, so there was nothing to remove.
-
-Admin
-
-- Staff sign-in
-- Clients map
-- Client file + Phase 2→3 gate
-
-The CD lockup is the way home to Phase 1.
-
-## Decisions used in this build
-
-Taken from the later README notes where they disagree with older docs:
-
-- Company is Australia
-- Phase 1 ketone baseline is **5 tests, one every second day**
-- Occupation-language videos are shelved (occupation is still collected)
-- Bloods are optional
-- Local gyms/butchers consent box is kept, off by default
-
-Still placeholders: cancellation terms, password-link expiry.
-
-Open `index.html` or the GitHub Pages URL. No build step required.
-
-The Pages workflow stamps `?v=` on the script and stylesheet with the commit
-SHA at deploy time. Before that it was a hardcoded date, so a push landed at
-the same URL and browsers kept serving the old files. If a change does not
-appear on the live site, that is the first thing to check.
-
-Hash routes:
-
-- `#/` Login
-- `#/reset` Start your reset
-- `#/app/my-body` My body, the phase picker
-- `#/app/my-body/1` Phase 1
-- `#/app/ketones` · `#/app/macros` · `#/app/videos` · `#/app/shop`
-- `#/admin` Staff
-
-## Phase 2: The Switch
-
-Formerly "The Dad Bod". The program is about knowledge, and the phases are
-locked only so nobody gets ahead. Phase 1 opens Phase 2 when every box in
-What you need is ticked; each box ticks with one tap.
-
-`#/app/my-body/2` is The Switch, laid out like Phase 1: the intro film at
-the top (`PHASE2_INTRO_VIDEO`, a placeholder until it is filmed), then four
-lessons he ticks off the way he ticks off the kit: Sugar, Macros, Gut health,
-Cells (`#/app/lesson/2/<slug>`). Each lesson's `video` field takes its file
-in `assets/` once filmed, and the plate turns from READ to WATCH. Below the
-lessons: a GP warning for anyone on blood sugar or blood pressure medicine,
-the first-week salt and magnesium reminder, a link to his readings, his
-visceral number from the scan, and the Phase 3 gate.
-
-Alcohol is folded into Sugar and zone training into Cells. The visceral fat
-page is opened from the warehouse card rather than the list.
-
-Ketones, in both phases: he tests whenever he likes, as often as he likes,
-and can tag a reading with when he took it (first thing, after a sugary meal,
-after a big feed, before bed). There is no target number and no morning rule.
-Readings are tagged with the phase they were taken in.
-
-Phase 2 → 3 gate: all four Phase 2 lessons ticked off. When it is met the app
-says so; Phase 3 itself is not built yet, so it does not open.
-
-Lesson films for Phase 2 are not made yet. Each lesson page says so and
-carries the full script as text, so the films can be made from it.
-
-## The login is a door, not an auth check
-
-The lockup, the slogan, and two ways in: LOG IN opens My body, REGISTER opens
-Start your reset. There are no email or password fields, on purpose. There is
-no auth service behind this, and a form that takes a password and then lets
-anybody through is worse than no form: it tells a man an account is holding
-his record when nothing is. With no fields, nothing is pretending.
-
-The country picker stays at the foot and sets the flag in the lockup.
-
-## Payment is out, for now
-
-The $25 a week screen, the card fields, "check your email" and "set your
-password" have been taken out. There is no payment provider behind any of it,
-and a form that takes a card number and then says it worked is worse than not
-having one.
-
-REGISTER collects his numbers and his trade and opens Phase 1 straight away.
-His record is on the phone.
-
-Putting payment back is a deliberate job: a provider, a real account, and the
-cancellation terms that are still a placeholder.
-
-React source is in `src/` for a later Vite build. The live app is the root static files so you can view it on GitHub immediately.
+See `docs/grok-api.md` for the structure to:
+- Generate AI body visualizations from scan numbers
+- Explain ketone readings in pure factory language
+- Support metabolic flexibility teaching
 
 ## Product docs
 
-See `docs/master-map.md`, `docs/app-build-status.md`, `docs/feature-backlog.md`.
+See `docs/master-map.md`, `docs/app-build-status.md`, `docs/feature-backlog.md`, `docs/grok-api.md`.
 
-## The app
-
-The website and the app are one build. `manifest.webmanifest` and `sw.js`
-make the site installable: on Android, Chrome offers Install app (and
-Account has an INSTALL THE APP button when Chrome allows it); on iPhone,
-Safari → Share → Add to Home Screen. It opens full screen with the CD plate
-icon (`assets/icons/`). The service worker fetches pages, scripts and styles
-from the network first and only falls back to its saved copy when offline,
-so an update never gets stuck behind an old version. Films are not cached.
+React source is in `src/`. The live app can be the root static files or a Vite build.
