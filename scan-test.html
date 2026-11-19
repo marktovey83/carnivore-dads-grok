@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scan Image Test — Carnivore Dads</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #141414; color: #EDE6D6; margin: 0; padding: 20px; }
+    h1 { font-family: Anton, sans-serif; letter-spacing: 0.04em; }
+    label { display: block; margin: 12px 0 4px; font-size: 13px; letter-spacing: 0.12em; color: #C9963A; }
+    input { width: 100%; max-width: 280px; padding: 10px; background: #262626; border: 1px solid #3a3a3a; color: #EDE6D6; border-radius: 6px; }
+    button { margin-top: 18px; padding: 12px 18px; background: #C9963A; color: #141414; border: none; font-weight: 700; letter-spacing: 0.08em; border-radius: 6px; cursor: pointer; }
+    button:disabled { opacity: 0.6; }
+    .card { background: #1c1c1c; border: 1px solid #262626; border-radius: 12px; padding: 16px; margin: 16px 0; max-width: 420px; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 12px 0; }
+    .stat { background: #262626; padding: 10px; border-radius: 8px; text-align: center; }
+    .stat b { display: block; font-size: 18px; }
+    img { max-width: 100%; border-radius: 12px; margin-top: 12px; border: 1px solid #262626; }
+    .fine { font-size: 13px; color: #a89f8c; }
+    #error { color: #C9963A; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <h1>SCAN IMAGE TEST</h1>
+  <p class="fine">Enter numbers. Generate a professional image from the scan. See the organ-warehouse estimate.</p>
+
+  <div class="card">
+    <label>Height (cm)</label>
+    <input id="height" value="180" />
+    <label>Weight (kg)</label>
+    <input id="weight" value="95" />
+    <label>Body fat %</label>
+    <input id="bodyFat" value="28" />
+    <label>Visceral fat level</label>
+    <input id="visceral" value="12" />
+    <label>Waist (cm) — optional</label>
+    <input id="waist" />
+    <label>Hips (cm) — optional</label>
+    <input id="hips" />
+    <button id="gen">GENERATE IMAGE FROM SCAN</button>
+    <div id="error"></div>
+  </div>
+
+  <div class="card" id="warehouse">
+    <strong>ORGAN WAREHOUSE</strong>
+    <div class="stats">
+      <div class="stat"><span class="fine">Visceral</span><b id="vis">12</b></div>
+      <div class="stat"><span class="fine">Around organs</span><b id="grams">~1440g</b></div>
+      <div class="stat"><span class="fine">Calories</span><b id="kcal">~12,960</b></div>
+    </div>
+    <p class="fine" id="summary">Rough estimate from the visceral level. ~9 kcal per gram.</p>
+  </div>
+
+  <div id="result"></div>
+
+  <script>
+    const SERVER = "https://carnivore-dads-server.mark-c4a.workers.dev";
+
+    function updateWarehouse() {
+      const vis = Number(document.getElementById("visceral").value) || 12;
+      const weight = Number(document.getElementById("weight").value) || 95;
+      const bf = Number(document.getElementById("bodyFat").value) || 28;
+      const grams = Math.round(vis * 120);
+      const kcal = Math.round(grams * 9);
+      const totalKg = (weight * bf) / 100;
+      const totalKcal = Math.round(totalKg * 9000);
+      document.getElementById("vis").textContent = vis;
+      document.getElementById("grams").textContent = "~" + grams + "g";
+      document.getElementById("kcal").textContent = "~" + kcal.toLocaleString();
+      document.getElementById("summary").textContent =
+        `Rough estimate from the visceral level. ~9 kcal per gram. Total body fat ≈ ${totalKg.toFixed(1)} kg (~${totalKcal.toLocaleString()} kcal).`;
+    }
+
+    ["height","weight","bodyFat","visceral","waist","hips"].forEach(id => {
+      document.getElementById(id).addEventListener("input", updateWarehouse);
+    });
+    updateWarehouse();
+
+    document.getElementById("gen").onclick = async () => {
+      const btn = document.getElementById("gen");
+      const err = document.getElementById("error");
+      const result = document.getElementById("result");
+      err.textContent = "";
+      result.innerHTML = "";
+      btn.disabled = true;
+      btn.textContent = "GENERATING…";
+      try {
+        const body = {
+          height: Number(document.getElementById("height").value) || 180,
+          weight: Number(document.getElementById("weight").value) || 95,
+          bodyFat: Number(document.getElementById("bodyFat").value) || 28,
+          visceral: Number(document.getElementById("visceral").value) || 12,
+        };
+        const w = document.getElementById("waist").value;
+        const h = document.getElementById("hips").value;
+        if (w) body.waist = Number(w);
+        if (h) body.hips = Number(h);
+
+        const res = await fetch(SERVER + "/scan/image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed");
+        result.innerHTML = `<img src="${data.image}" alt="Scan body" /><p class="fine">Made from your numbers. An illustration, not a photo.</p>`;
+      } catch (e) {
+        err.textContent = e.message || "Could not generate image";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "GENERATE IMAGE FROM SCAN";
+      }
+    };
+  </script>
+</body>
+</html>
