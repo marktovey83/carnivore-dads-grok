@@ -138,10 +138,16 @@ export async function generateScanImage(key: string, scan: ScanBodyInput): Promi
     }),
   });
 
-  const body: any = await res.json().catch(() => ({}));
+  const text = await res.text();
+  let body: any = {};
+  try { body = JSON.parse(text); } catch {}
+
   if (!res.ok) {
-    const msg = body?.error?.message || body?.message || JSON.stringify(body).slice(0, 300) || "image_failed";
-    return { error: String(msg), status: res.status, raw: body };
+    return {
+      error: `status ${res.status}: ${text.slice(0, 400)}`,
+      status: res.status,
+      raw: { status: res.status, body: text.slice(0, 500) },
+    };
   }
   const url = body?.data?.[0]?.url || body?.data?.[0]?.b64_json || body?.url || body?.image_url;
   if (!url) return { error: "no_image_url", status: 502, raw: body };
