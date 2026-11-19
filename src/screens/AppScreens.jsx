@@ -5,6 +5,9 @@ import { kitProgress, useApp } from "../state";
 import { BrandLockup, CdPlate } from "../components/Brand";
 import { Header, Phone } from "../components/Shell";
 
+// Update this to your live Cloudflare Worker URL once deployed
+const SERVER = "https://carnivore-dads-server.mark-c4a.workers.dev";
+
 export function Phase1() {
   const { state, setWatched, toggleOwned } = useApp();
   const { owned, total } = kitProgress(state);
@@ -74,6 +77,36 @@ export function Factory() {
   const fat = Number(state.scan.bodyFat || 28);
   const vis = Number(state.scan.visceral || 12);
   const scale = 1 + (fat - 15) / 80;
+  const [image, setImage] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function generateImage() {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`${SERVER}/scan/image`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          height: Number(state.scan.height) || 180,
+          weight: Number(state.scan.weight) || 95,
+          bodyFat: fat,
+          visceral: vis,
+          waist: state.scan.waist ? Number(state.scan.waist) : undefined,
+          hips: state.scan.hips ? Number(state.scan.hips) : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
+      setImage(data.image);
+    } catch (e) {
+      setError(e.message || "Could not generate image");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <Phone tabs country={state.country}>
       <div className="screen with-tabs">
@@ -82,20 +115,34 @@ export function Factory() {
         <h2 className="display">THIS IS YOUR FACTORY.</h2>
         <p className="lede">Built from your scan. Not a stock photo, not a guess — your height, your weight, your numbers.</p>
         <p className="fine">FRONT / SCAN 001</p>
-        <div className="body-stage">
-          <div className="sil" style={{ transform: `scale(${scale})` }}>
-            <div className="arm l" />
-            <div className="arm r" />
-            <div className="head" />
-            <div className="torso">
-              <div className="gut" style={{ opacity: 0.25 + vis / 30, height: `${28 + vis * 1.4}%` }} />
-            </div>
-            <div className="legs">
-              <div className="leg" />
-              <div className="leg" />
+
+        {image ? (
+          <div style={{ margin: "16px 0", textAlign: "center" }}>
+            <img src={image} alt="Your factory from scan" style={{ maxWidth: "100%", borderRadius: 12, border: "1px solid #262626" }} />
+            <p className="fine" style={{ marginTop: 8 }}>Made from your scan numbers. An illustration, not a photo.</p>
+          </div>
+        ) : (
+          <div className="body-stage">
+            <div className="sil" style={{ transform: `scale(${scale})` }}>
+              <div className="arm l" />
+              <div className="arm r" />
+              <div className="head" />
+              <div className="torso">
+                <div className="gut" style={{ opacity: 0.25 + vis / 30, height: `${28 + vis * 1.4}%` }} />
+              </div>
+              <div className="legs">
+                <div className="leg" />
+                <div className="leg" />
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
+        <button className="btn" onClick={generateImage} disabled={loading} style={{ marginTop: 12 }}>
+          {loading ? "GENERATING…" : "GENERATE PROFESSIONAL IMAGE FROM SCAN"}
+        </button>
+        {error && <p className="fine" style={{ color: "#c9963a" }}>{error}</p>}
+
         <div className="stat-grid">
           <div className="stat">
             <span className="field" style={{ margin: 0 }}>
