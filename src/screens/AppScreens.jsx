@@ -125,10 +125,10 @@ export function Factory() {
         <div className="card">
           <strong>BLOOD KETONES</strong>
           <p className="fine">
-            Eat the way you eat now. Test first thing, five times, one every second day, and photograph each one. That is your before-photo, and it is what opens Phase 2.
+            Eat the way you eat now. Log as many readings as you like. Every reading records time since last meal and the time you took it. That is your starting picture before Phase 2.
           </p>
           <Link className="btn" to="/app/ketones">
-            LOG MY FIRST READING
+            LOG A READING
           </Link>
         </div>
       </div>
@@ -202,7 +202,7 @@ export function BajaSalt() {
       <div className="screen with-tabs">
         <Header country={state.country} phase />
         <p className="phase-tag">Phase 1 · The kit</p>
-        <h2 className="display">BAJA GOLD SEA SALT.</h2>
+        <h2 className="display">MINERAL SALT.</h2>
         <div className="body-stage" style={{ height: 180, background: "#16120c" }}>
           <div>
             <p className="etk" style={{ textAlign: "center" }}>
@@ -218,8 +218,8 @@ export function BajaSalt() {
             Two piles side by side. One is stripped white. One still has what the sea put in it.
           </li>
           <li>
-            <strong>SEA OF CORTEZ</strong>
-            Unrefined and mineral rich, off the ponds rather than out of a refinery.
+            <strong>UNREFINED MINERAL SALT</strong>
+            Celtic or Baja. Same class. Keeps the small minerals table salt strips out.
           </li>
           <li>
             <strong>MAGNESIUM · POTASSIUM · TRACE</strong>
@@ -254,7 +254,7 @@ export function BajaSalt() {
 export function Videos() {
   const { state, setWatched } = useApp();
   const lessons = [
-    { id: "baja", name: "Baja salt", to: "/app/kit/baja-salt" },
+    { id: "baja", name: "Mineral salt", to: "/app/kit/baja-salt" },
     { id: "fish", name: "Fish oil" },
     { id: "mag", name: "Magnesium glycinate" },
     { id: "ketones", name: "Ketone meter and strips" },
@@ -270,7 +270,7 @@ export function Videos() {
         <Header country={state.country} phase />
         <p className="phase-tag">Videos</p>
         <h2 className="display">THE KIT, THEN THE FACTORY.</h2>
-        <p className="lede">Knowledge first. Each CD plate opens the teaching for that thing. Occupation-language cuts are shelved for now — same lesson for every dad.</p>
+        <p className="lede">Knowledge first. Each CD plate opens the teaching for that thing. Pure factory language for every dad.</p>
         {lessons.map((v) => (
           <div className="kit-row" key={v.id}>
             <div className={`check ${state.watched[v.id] ? "on" : ""}`}>{state.watched[v.id] ? "✓" : ""}</div>
@@ -290,29 +290,51 @@ export function Videos() {
 export function Ketones() {
   const { state, addKetone } = useApp();
   const [val, setVal] = useState("");
+  const [hoursSince, setHoursSince] = useState("");
+  const [timeTaken, setTimeTaken] = useState("");
   return (
     <Phone tabs country={state.country}>
       <div className="screen with-tabs">
         <Header country={state.country} phase />
         <p className="phase-tag">Ketones</p>
-        <h2 className="display">BEFORE-PHOTO.</h2>
+        <h2 className="display">BASELINE.</h2>
         <p className="lede">
-          Phase 1 baseline is five tests, one every second day, on the diet you eat now. Typical old-diet reading is 0.0–0.2 mmol/L. That is the photo Phase 2 is judged against.
+          Phase 1 baseline on the diet you eat now. Log as many readings as you like. Every log records time since last meal and the time you took it.
         </p>
-        <label className="field">Morning reading (mmol/L)</label>
+        <label className="field">Reading (mmol/L)</label>
         <input value={val} onChange={(e) => setVal(e.target.value)} placeholder="0.1" />
-        <button className="btn" style={{ marginTop: 12 }} onClick={() => { if (val) { addKetone(val); setVal(""); } }}>
+        <label className="field">Hours since last meal</label>
+        <input value={hoursSince} onChange={(e) => setHoursSince(e.target.value)} placeholder="12" type="number" step="0.5" />
+        <label className="field">Time taken</label>
+        <input value={timeTaken} onChange={(e) => setTimeTaken(e.target.value)} placeholder="07:30" />
+        <button
+          className="btn"
+          style={{ marginTop: 12 }}
+          onClick={() => {
+            if (val) {
+              addKetone(val, hoursSince, timeTaken);
+              setVal("");
+              setHoursSince("");
+              setTimeTaken("");
+            }
+          }}
+        >
           SAVE READING
         </button>
         <p className="badge" style={{ marginTop: 16 }}>
-          {state.ketones.length} / 5
+          {state.ketones.length} logged
         </p>
         {state.ketones.map((k, i) => (
-          <div className="kit-row" key={k.at}>
+          <div className="kit-row" key={k.at || i}>
             <div className="check on">{i + 1}</div>
             <div>
               {k.mmol} mmol/L
-              <div className="fine">{new Date(k.at).toLocaleString()}</div>
+              <div className="fine">
+                {k.hoursSinceMeal ? `${k.hoursSinceMeal}h since meal` : "time since meal not set"}
+                {k.timeTaken ? ` · ${k.timeTaken}` : ""}
+                <br />
+                {new Date(k.at).toLocaleString()}
+              </div>
             </div>
             <span />
           </div>
@@ -358,8 +380,6 @@ export function Account() {
             Email
           </p>
           <p>{state.email || "you@email.com"}</p>
-          <p className="field">Trade</p>
-          <p>{state.occupation || "Not set"}</p>
           <p className="field">Delivery</p>
           <p>
             {state.address.street || "Address on file"} {state.address.suburb} {state.address.state} {state.address.postcode}
