@@ -30,7 +30,6 @@ export type KetoneInput = {
   timeTaken?: string | null;
 };
 
-/* Build a clear factory-language description from scan numbers. */
 export function scanBodyPrompt(scan: ScanBodyInput): string {
   const parts = [
     scan.height ? `height ${scan.height} cm` : null,
@@ -51,7 +50,51 @@ Describe his factory in plain language for him (2–4 short sentences):
 Then give a single precise image prompt (one paragraph) that an image model can use to draw a respectful full-body front view of this man in training shorts, plain charcoal background, standing straight. The image must match the numbers honestly (neither flattering nor exaggerated). No face likeness required. No text in the image.`;
 }
 
-/* Build a ketone explanation request. */
+/* High-quality professional image prompt built directly from scan numbers. */
+export function professionalScanImagePrompt(scan: ScanBodyInput): string {
+  const h = scan.height || 180;
+  const w = scan.weight || 95;
+  const bf = scan.bodyFat ?? 28;
+  const vis = scan.visceral ?? 12;
+  const waist = scan.waist;
+  const hips = scan.hips;
+
+  const bmi = w / (h / 100) ** 2;
+  const frame =
+    bmi >= 32 ? "a large, heavy frame with substantial mass" :
+    bmi >= 27 ? "a solid, heavy-set frame" :
+    bmi >= 23 ? "a medium, solid frame" :
+    "a leaner frame";
+
+  const fatDesc =
+    bf >= 35 ? "significant soft fat coverage across the torso, a large protruding belly, soft chest and sides" :
+    bf >= 28 ? "noticeable midsection fat with a clear belly and soft waist, limited muscle definition" :
+    bf >= 22 ? "moderate softness around the waist and lower chest, some muscle shape still visible in the shoulders and arms" :
+    bf >= 15 ? "relatively lean with mild waist softness and visible muscle tone in the upper body" :
+    "lean and defined with clear muscle separation and a flat stomach";
+
+  const visDesc =
+    vis >= 15 ? "thick, firm visceral fat creating a rounded, protruding midsection and wide waist" :
+    vis >= 10 ? "extra visceral fat giving a thicker waist and outward belly" :
+    vis >= 6 ? "mild extra around the middle" :
+    "trim midsection";
+
+  const measurements = [
+    `${h} cm tall`,
+    `${w} kg`,
+    `${bf}% body fat`,
+    `visceral fat level ${vis}`,
+    waist ? `waist ${waist} cm` : null,
+    hips ? `hips ${hips} cm` : null,
+  ].filter(Boolean).join(", ");
+
+  return `Photorealistic full-body studio photograph of an ordinary working dad, head to feet in frame, front view, standing straight and relaxed with arms at his sides, calm neutral expression, looking toward camera. Shirtless, wearing plain black mid-thigh training shorts, barefoot. Plain dark charcoal studio background, soft even professional lighting, sharp focus, natural skin texture, realistic proportions.
+
+Body accurately matches these scan numbers: ${measurements}. He has ${frame}. Body composition: ${fatDesc}. Midsection: ${visDesc}.
+
+Draw the body honestly to the numbers — neither flattering nor exaggerated. Respectful fitness-assessment style photo. No text, logos, watermarks, tattoos, or jewellery. Upright 9:16 composition.`;
+}
+
 export function ketonePrompt(k: KetoneInput): string {
   const when = k.hoursSinceMeal != null ? `${k.hoursSinceMeal} hours since last meal` : "time since last meal not given";
   const clock = k.timeTaken ? ` taken at ${k.timeTaken}` : "";
@@ -63,7 +106,6 @@ Explain this reading in pure factory language (2–3 short sentences):
 - Education only. Do not diagnose or prescribe.`;
 }
 
-/* Call xAI Grok chat completions. */
 export async function callGrok(key: string, system: string, user: string): Promise<{ text: string } | { error: string; status: number }> {
   const res = await fetch("https://api.x.ai/v1/chat/completions", {
     method: "POST",
@@ -89,4 +131,29 @@ export async function callGrok(key: string, system: string, user: string): Promi
   const text = body?.choices?.[0]?.message?.content || "";
   if (!text) return { error: "empty_reply", status: 502 };
   return { text };
+}
+
+/* Generate a professional body image from scan numbers using Grok Imagine. */
+export async function generateScanImage(key: string, scan: ScanBodyInput): Promise<{ url: string } | { error: string; status: number }> {
+  const prompt = professionalScanImagePrompt(scan);
+  const res = await fetch("https://api.x.ai/v1/images/generations", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${key}`,
+    },
+    body: JSON.stringify({
+      model: "grok-imagine-image",
+      prompt,
+      n: 1,
+    }),
+  });
+
+  const body: any = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    return { error: String(body?.error?.message || "image_failed"), status: res.status };
+  }
+  const url = body?.data?.[0]?.url || body?.data?.[0]?.b64_json;
+  if (!url) return { error: "no_image", status: 502 };
+  return { url: url.startsWith("http") ? url : `data:image/png;base64,${url}` };
 }
