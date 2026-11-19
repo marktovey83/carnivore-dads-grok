@@ -206,7 +206,7 @@ export function BodyScan() {
         <Header country={state.country} phase />
         <p className="phase-tag">Phase 1 · Kit</p>
         <h2 className="display">YOUR BODY SCAN.</h2>
-        <p className="lede">Photograph every screen the machine gives you and we will read the numbers off it. Or type them in yourself.</p>
+        <p className="lede">All fields open. Type your numbers or leave them blank for now. Restrictions come later.</p>
         <div className="row-btns">
           <button className="btn ghost">TAKE PHOTO</button>
           <button className="btn ghost">UPLOAD</button>
@@ -339,6 +339,16 @@ export function Ketones() {
   const [val, setVal] = useState("");
   const [hoursSince, setHoursSince] = useState("");
   const [timeTaken, setTimeTaken] = useState("");
+
+  const vis = Number(state.scan.visceral || 12);
+  const weight = Number(state.scan.weight || 95);
+  const bf = Number(state.scan.bodyFat || 28);
+  // Rough estimate: visceral fat level ~ grams of organ-warehouse fat. ~9 kcal per gram.
+  const visceralGrams = Math.round(vis * 120);
+  const visceralKcal = Math.round(visceralGrams * 9);
+  const totalFatKg = (weight * bf) / 100;
+  const totalFatKcal = Math.round(totalFatKg * 9000);
+
   return (
     <Phone tabs country={state.country}>
       <div className="screen with-tabs">
@@ -348,6 +358,52 @@ export function Ketones() {
         <p className="lede">
           Phase 1 baseline on the diet you eat now. Log as many readings as you like. Every log records time since last meal and the time you took it.
         </p>
+
+        <div className="card" style={{ marginBottom: 16 }}>
+          <div className="split">
+            <strong>ORGAN WAREHOUSE</strong>
+            <span className="badge">FROM SCAN</span>
+          </div>
+          <div className="body-stage" style={{ height: 160, margin: "12px 0", position: "relative" }}>
+            <div className="sil" style={{ transform: "scale(0.85)" }}>
+              <div className="arm l" />
+              <div className="arm r" />
+              <div className="head" />
+              <div className="torso">
+                <div
+                  className="gut"
+                  style={{
+                    opacity: 0.35 + vis / 25,
+                    height: `${30 + vis * 1.6}%`,
+                    background: "#C9963A",
+                  }}
+                />
+              </div>
+              <div className="legs">
+                <div className="leg" />
+                <div className="leg" />
+              </div>
+            </div>
+          </div>
+          <div className="stat-grid">
+            <div className="stat">
+              <span className="field" style={{ margin: 0 }}>Visceral level</span>
+              <b>{vis}</b>
+            </div>
+            <div className="stat">
+              <span className="field" style={{ margin: 0 }}>Around organs</span>
+              <b>~{visceralGrams}g</b>
+            </div>
+            <div className="stat">
+              <span className="field" style={{ margin: 0 }}>Calories there</span>
+              <b>~{visceralKcal.toLocaleString()}</b>
+            </div>
+          </div>
+          <p className="fine" style={{ marginTop: 8 }}>
+            The ember is the fat packed around the organs — closest to the blood pipes. Rough estimate from your scan level. Total body fat is about {totalFatKg.toFixed(1)} kg (~{totalFatKcal.toLocaleString()} kcal).
+          </p>
+        </div>
+
         <label className="field">Reading (mmol/L)</label>
         <input value={val} onChange={(e) => setVal(e.target.value)} placeholder="0.1" />
         <label className="field">Hours since last meal</label>
