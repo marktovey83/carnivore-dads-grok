@@ -134,7 +134,7 @@ export async function callGrok(key: string, system: string, user: string): Promi
 }
 
 /* Generate a professional body image from scan numbers using Grok Imagine. */
-export async function generateScanImage(key: string, scan: ScanBodyInput): Promise<{ url: string } | { error: string; status: number }> {
+export async function generateScanImage(key: string, scan: ScanBodyInput): Promise<{ url: string } | { error: string; status: number; raw?: any }> {
   const prompt = professionalScanImagePrompt(scan);
   const res = await fetch("https://api.x.ai/v1/images/generations", {
     method: "POST",
@@ -152,10 +152,10 @@ export async function generateScanImage(key: string, scan: ScanBodyInput): Promi
 
   const body: any = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const msg = body?.error?.message || body?.message || JSON.stringify(body).slice(0, 200) || "image_failed";
-    return { error: String(msg), status: res.status };
+    const msg = body?.error?.message || body?.message || JSON.stringify(body).slice(0, 300) || "image_failed";
+    return { error: String(msg), status: res.status, raw: body };
   }
-  const url = body?.data?.[0]?.url || body?.data?.[0]?.b64_json;
-  if (!url) return { error: "no_image", status: 502 };
+  const url = body?.data?.[0]?.url || body?.data?.[0]?.b64_json || body?.url || body?.image_url;
+  if (!url) return { error: "no_image_url", status: 502, raw: body };
   return { url: url.startsWith("http") ? url : `data:image/png;base64,${url}` };
 }
