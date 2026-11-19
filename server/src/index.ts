@@ -3,12 +3,15 @@
    POST /scan/body   { height, weight, bodyFat, visceral, waist?, hips? }
    → factory description + image prompt
 
+   POST /scan/image  { height, weight, bodyFat, visceral, waist?, hips? }
+   → professional photorealistic body image URL from the scan numbers
+
    POST /ketones/explain  { mmol, hoursSinceMeal?, timeTaken? }
    → factory-language explanation
 
    Nothing is stored. Education only. */
 
-import { FACTORY_SYSTEM, callGrok, ketonePrompt, scanBodyPrompt, type KetoneInput, type ScanBodyInput } from "./grok.ts";
+import { FACTORY_SYSTEM, callGrok, generateScanImage, ketonePrompt, scanBodyPrompt, type KetoneInput, type ScanBodyInput } from "./grok.ts";
 
 export interface Env {
   GROK_API_KEY: string;
@@ -75,6 +78,24 @@ async function handle(req: Request, env: Env): Promise<Response> {
     const result = await callGrok(env.GROK_API_KEY, FACTORY_SYSTEM, scanBodyPrompt(scan));
     if ("error" in result) return json(result.status, { error: result.error });
     return json(200, { text: result.text });
+  }
+
+  if (url.pathname === "/scan/image") {
+    if (env.SCAN_LIMIT) {
+      const who = req.headers.get("CF-Connecting-IP") || "unknown";
+      const { success } = await env.SCAN_LIMIT.limit({ key: who });
+      if (!success) return json(429, { error: "too_many" });
+    }
+    let raw: unknown;
+    try {
+      raw = await req.json();
+    } catch {
+      return json(400, { error: "bad_request" });
+    }
+    const scan = raw as ScanBodyInput;
+    const result = await generateScanImage(env.GROK_API_KEY, scan);
+    if ("error" in result) return json(result.status, { error: result.error });
+    return json(200, { image: result.url });
   }
 
   if (url.pathname === "/ketones/explain") {
