@@ -17,7 +17,7 @@
     .stat b { display: block; font-size: 18px; }
     img { max-width: 100%; border-radius: 12px; margin-top: 12px; border: 1px solid #262626; }
     .fine { font-size: 13px; color: #a89f8c; }
-    #error { color: #C9963A; margin-top: 8px; }
+    #error { color: #C9963A; margin-top: 8px; white-space: pre-wrap; font-size: 12px; }
   </style>
 </head>
 <body>
@@ -102,7 +102,11 @@
           body: JSON.stringify(body),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed");
+        if (!res.ok) {
+          const msg = data.error || "Failed";
+          const raw = data.raw ? "\n\n" + JSON.stringify(data.raw, null, 2) : "";
+          throw new Error(msg + raw);
+        }
         result.innerHTML = `<img src="${data.image}" alt="Scan body" /><p class="fine">Made from your numbers. An illustration, not a photo.</p>`;
       } catch (e) {
         err.textContent = e.message || "Could not generate image";
