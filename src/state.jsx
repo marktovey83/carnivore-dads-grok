@@ -42,7 +42,19 @@ export function AppState({ children }) {
         if (!state.watched[id] && id !== "ketones") return;
         save({ ...state, owned: { ...state.owned, [id]: !state.owned[id] } });
       },
-      addKetone: (mmol) => save({ ...state, ketones: [...state.ketones, { mmol, at: Date.now() }] }),
+      addKetone: (mmol, hoursSinceMeal, timeTaken) =>
+        save({
+          ...state,
+          ketones: [
+            ...state.ketones,
+            {
+              mmol,
+              hoursSinceMeal: hoursSinceMeal || null,
+              timeTaken: timeTaken || new Date().toISOString(),
+              at: Date.now(),
+            },
+          ],
+        }),
     };
   }, [state]);
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
