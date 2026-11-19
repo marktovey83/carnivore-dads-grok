@@ -94,7 +94,7 @@ async function handle(req: Request, env: Env): Promise<Response> {
     }
     const scan = raw as ScanBodyInput;
     const result = await generateScanImage(env.GROK_API_KEY, scan);
-    if ("error" in result) return json(result.status, { error: result.error });
+    if ("error" in result) return json(result.status, { error: result.error, raw: result.raw });
     return json(200, { image: result.url });
   }
 
