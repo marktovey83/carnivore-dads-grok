@@ -56,8 +56,6 @@ export function professionalScanImagePrompt(scan: ScanBodyInput): string {
   const w = scan.weight || 95;
   const bf = scan.bodyFat ?? 28;
   const vis = scan.visceral ?? 12;
-  const waist = scan.waist;
-  const hips = scan.hips;
 
   const bmi = w / (h / 100) ** 2;
   const frame =
@@ -79,20 +77,11 @@ export function professionalScanImagePrompt(scan: ScanBodyInput): string {
     vis >= 6 ? "mild extra around the middle" :
     "trim midsection";
 
-  const measurements = [
-    `${h} cm tall`,
-    `${w} kg`,
-    `${bf}% body fat`,
-    `visceral fat level ${vis}`,
-    waist ? `waist ${waist} cm` : null,
-    hips ? `hips ${hips} cm` : null,
-  ].filter(Boolean).join(", ");
-
   return `Photorealistic full-body studio photograph of an ordinary working dad, head to feet in frame, front view, standing straight and relaxed with arms at his sides, calm neutral expression, looking toward camera. Shirtless, wearing plain black mid-thigh training shorts, barefoot. Plain dark charcoal studio background, soft even professional lighting, sharp focus, natural skin texture, realistic proportions.
 
-Body accurately matches these scan numbers: ${measurements}. He has ${frame}. Body composition: ${fatDesc}. Midsection: ${visDesc}.
+Body accurately matches these scan numbers: ${h} cm tall, ${w} kg, ${bf}% body fat, visceral fat level ${vis}. He has ${frame}. Body composition: ${fatDesc}. Midsection: ${visDesc}.
 
-Draw the body honestly to the numbers — neither flattering nor exaggerated. Respectful fitness-assessment style photo. No text, logos, watermarks, tattoos, or jewellery. Upright 9:16 composition.`;
+Draw the body honestly to the numbers — neither flattering nor exaggerated. Respectful fitness-assessment style photo. No text, logos, watermarks, tattoos, or jewellery.`;
 }
 
 export function ketonePrompt(k: KetoneInput): string {
@@ -143,10 +132,9 @@ export async function generateScanImage(key: string, scan: ScanBodyInput): Promi
       Authorization: `Bearer ${key}`,
     },
     body: JSON.stringify({
-      model: "grok-imagine-image-2.0",
+      model: "grok-imagine-image",
       prompt,
       n: 1,
-      aspect_ratio: "9:16",
     }),
   });
 
