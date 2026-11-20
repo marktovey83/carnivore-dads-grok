@@ -42,15 +42,15 @@ export function AppState({ children }) {
         if (!state.watched[id] && id !== "ketones") return;
         save({ ...state, owned: { ...state.owned, [id]: !state.owned[id] } });
       },
-      addKetone: (mmol, hoursSinceMeal, timeTaken) =>
+      /* Time and date come from the phone automatically */
+      addKetone: (mmol, hoursSinceMeal) =>
         save({
           ...state,
           ketones: [
             ...state.ketones,
             {
-              mmol,
+              mmol: String(mmol),
               hoursSinceMeal: hoursSinceMeal || null,
-              timeTaken: timeTaken || new Date().toISOString(),
               at: Date.now(),
             },
           ],
