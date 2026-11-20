@@ -124,8 +124,7 @@ export async function callGrok(key: string, system: string, user: string): Promi
 
 /* Generate a professional body image from scan numbers using Grok Imagine. */
 export async function generateScanImage(key: string, scan: ScanBodyInput): Promise<{ url: string } | { error: string; status: number; raw?: any }> {
-  // Simple test prompt first to confirm the endpoint works
-  const prompt = "A simple red circle on a white background";
+  const prompt = professionalScanImagePrompt(scan);
   const res = await fetch("https://api.x.ai/v1/images/generations", {
     method: "POST",
     headers: {
