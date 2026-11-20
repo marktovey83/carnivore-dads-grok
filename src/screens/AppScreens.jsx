@@ -334,114 +334,96 @@ export function Videos() {
   );
 }
 
+/* Simple tachometer zones a 10-year-old can understand */
+function ketoneZone(mmol) {
+  const n = Number(mmol) || 0;
+  if (n < 0.2) return { label: "QUIET", color: "#6b6560", message: "Fat system is quiet. The stored depot is still locked." };
+  if (n < 0.5) return { label: "SWITCHING", color: "#a8843a", message: "Starting to switch. The fat system is waking up." };
+  if (n < 1.5) return { label: "OPEN", color: "#C9963A", message: "Fat system is open. The liver is making ketones." };
+  return { label: "DEEP", color: "#e0b45a", message: "Deep. The fat system is running hard." };
+}
+
+function Tachometer({ value }) {
+  const n = Math.min(Math.max(Number(value) || 0, 0), 3);
+  const angle = -120 + (n / 3) * 240; // -120 to +120 degrees
+  const zone = ketoneZone(n);
+  return (
+    <div style={{ textAlign: "center", margin: "16px 0" }}>
+      <svg viewBox="0 0 200 140" style={{ width: "100%", maxWidth: 280 }}>
+        <path d="M20 110 A80 80 0 0 1 180 110" fill="none" stroke="#262626" strokeWidth="14" strokeLinecap="round" />
+        <path d="M20 110 A80 80 0 0 1 180 110" fill="none" stroke={zone.color} strokeWidth="14" strokeLinecap="round" strokeDasharray={`${(n / 3) * 251} 251`} />
+        <line
+          x1="100" y1="110"
+          x2={100 + 55 * Math.cos((angle - 90) * Math.PI / 180)}
+          y2={110 + 55 * Math.sin((angle - 90) * Math.PI / 180)}
+          stroke="#EDE6D6" strokeWidth="3" strokeLinecap="round"
+        />
+        <circle cx="100" cy="110" r="6" fill="#C9963A" />
+        <text x="100" y="95" textAnchor="middle" fill="#EDE6D6" fontSize="22" fontFamily="Anton, sans-serif">{n.toFixed(1)}</text>
+        <text x="100" y="128" textAnchor="middle" fill="#a89f8c" fontSize="11" letterSpacing="0.15em">{zone.label}</text>
+      </svg>
+      <p className="fine" style={{ marginTop: 4 }}>{zone.message}</p>
+    </div>
+  );
+}
+
 export function Ketones() {
   const { state, addKetone } = useApp();
   const [val, setVal] = useState("");
   const [hoursSince, setHoursSince] = useState("");
-  const [timeTaken, setTimeTaken] = useState("");
 
-  const vis = Number(state.scan.visceral || 12);
-  const weight = Number(state.scan.weight || 95);
-  const bf = Number(state.scan.bodyFat || 28);
-  // Rough estimate: visceral fat level ~ grams of organ-warehouse fat. ~9 kcal per gram.
-  const visceralGrams = Math.round(vis * 120);
-  const visceralKcal = Math.round(visceralGrams * 9);
-  const totalFatKg = (weight * bf) / 100;
-  const totalFatKcal = Math.round(totalFatKg * 9000);
+  const latest = state.ketones[state.ketones.length - 1];
+  const current = latest ? Number(latest.mmol) : 0;
+
+  function save() {
+    if (!val) return;
+    addKetone(val, hoursSince || null);
+    setVal("");
+    setHoursSince("");
+  }
 
   return (
     <Phone tabs country={state.country}>
       <div className="screen with-tabs">
         <Header country={state.country} phase />
         <p className="phase-tag">Ketones</p>
-        <h2 className="display">BASELINE.</h2>
-        <p className="lede">
-          Phase 1 baseline on the diet you eat now. Log as many readings as you like. Every log records time since last meal and the time you took it.
-        </p>
+        <h2 className="display">THE GAUGE.</h2>
+        <p className="lede">Log a reading. The time and date come from your phone. One number is not a pass or fail — the trend matters.</p>
 
-        <div className="card" style={{ marginBottom: 16 }}>
-          <div className="split">
-            <strong>ORGAN WAREHOUSE</strong>
-            <span className="badge">FROM SCAN</span>
-          </div>
-          <div className="body-stage" style={{ height: 160, margin: "12px 0", position: "relative" }}>
-            <div className="sil" style={{ transform: "scale(0.85)" }}>
-              <div className="arm l" />
-              <div className="arm r" />
-              <div className="head" />
-              <div className="torso">
-                <div
-                  className="gut"
-                  style={{
-                    opacity: 0.35 + vis / 25,
-                    height: `${30 + vis * 1.6}%`,
-                    background: "#C9963A",
-                  }}
-                />
-              </div>
-              <div className="legs">
-                <div className="leg" />
-                <div className="leg" />
-              </div>
-            </div>
-          </div>
-          <div className="stat-grid">
-            <div className="stat">
-              <span className="field" style={{ margin: 0 }}>Visceral level</span>
-              <b>{vis}</b>
-            </div>
-            <div className="stat">
-              <span className="field" style={{ margin: 0 }}>Around organs</span>
-              <b>~{visceralGrams}g</b>
-            </div>
-            <div className="stat">
-              <span className="field" style={{ margin: 0 }}>Calories there</span>
-              <b>~{visceralKcal.toLocaleString()}</b>
-            </div>
-          </div>
-          <p className="fine" style={{ marginTop: 8 }}>
-            The ember is the fat packed around the organs — closest to the blood pipes. Rough estimate from your scan level. Total body fat is about {totalFatKg.toFixed(1)} kg (~{totalFatKcal.toLocaleString()} kcal).
-          </p>
+        <Tachometer value={current} />
+
+        <div className="card">
+          <label className="field">Reading (mmol/L)</label>
+          <input value={val} onChange={(e) => setVal(e.target.value)} placeholder="0.4" inputMode="decimal" />
+          <label className="field">Hours since last meal (optional)</label>
+          <input value={hoursSince} onChange={(e) => setHoursSince(e.target.value)} placeholder="12" type="number" step="0.5" />
+          <button className="btn" style={{ marginTop: 12 }} onClick={save}>
+            SAVE READING
+          </button>
+          <p className="fine" style={{ marginTop: 8 }}>Time and date are saved automatically.</p>
         </div>
 
-        <label className="field">Reading (mmol/L)</label>
-        <input value={val} onChange={(e) => setVal(e.target.value)} placeholder="0.1" />
-        <label className="field">Hours since last meal</label>
-        <input value={hoursSince} onChange={(e) => setHoursSince(e.target.value)} placeholder="12" type="number" step="0.5" />
-        <label className="field">Time taken</label>
-        <input value={timeTaken} onChange={(e) => setTimeTaken(e.target.value)} placeholder="07:30" />
-        <button
-          className="btn"
-          style={{ marginTop: 12 }}
-          onClick={() => {
-            if (val) {
-              addKetone(val, hoursSince, timeTaken);
-              setVal("");
-              setHoursSince("");
-              setTimeTaken("");
-            }
-          }}
-        >
-          SAVE READING
-        </button>
-        <p className="badge" style={{ marginTop: 16 }}>
-          {state.ketones.length} logged
-        </p>
-        {state.ketones.map((k, i) => (
-          <div className="kit-row" key={k.at || i}>
-            <div className="check on">{i + 1}</div>
-            <div>
-              {k.mmol} mmol/L
-              <div className="fine">
-                {k.hoursSinceMeal ? `${k.hoursSinceMeal}h since meal` : "time since meal not set"}
-                {k.timeTaken ? ` · ${k.timeTaken}` : ""}
-                <br />
-                {new Date(k.at).toLocaleString()}
+        <p className="field" style={{ marginTop: 20 }}>Recent readings</p>
+        {state.ketones.length === 0 && <p className="fine">No readings yet. Log one above.</p>}
+        {[...state.ketones].reverse().map((k, i) => {
+          const z = ketoneZone(k.mmol);
+          return (
+            <div className="kit-row" key={k.at || i}>
+              <div className="check on" style={{ background: z.color, borderColor: z.color }}>{Number(k.mmol).toFixed(1)}</div>
+              <div>
+                <div>{z.label}</div>
+                <div className="fine">
+                  {k.hoursSinceMeal ? `${k.hoursSinceMeal}h since meal` : "time since meal not set"}
+                  <br />
+                  {new Date(k.at).toLocaleString()}
+                </div>
               </div>
+              <span />
             </div>
-            <span />
-          </div>
-        ))}
+          );
+        })}
+
+        <p className="legal">Education only. Not a diagnosis. One lucky 0.5 is not a pass. Look at the trend.</p>
       </div>
     </Phone>
   );
@@ -477,22 +459,13 @@ export function Account() {
       <div className="screen with-tabs">
         <Header country={state.country} phase />
         <p className="phase-tag">Account</p>
-        <h2 className="display">YOUR FILE.</h2>
+        <h2 className="display">ACCOUNT.</h2>
+        <p className="lede">Your details. Change them any time.</p>
         <div className="card">
-          <p className="field" style={{ marginTop: 0 }}>
-            Email
-          </p>
-          <p>{state.email || "you@email.com"}</p>
-          <p className="field">Delivery</p>
-          <p>
-            {state.address.street || "Address on file"} {state.address.suburb} {state.address.state} {state.address.postcode}
-          </p>
-          <p className="field">Plan</p>
-          <p>$25 / week · active</p>
+          <p className="fine">Email</p>
+          <p>{state.email || "Not set"}</p>
         </div>
-        <Link className="btn ghost" to="/">
-          SIGN OUT
-        </Link>
+        <p className="legal">Education and advice only. Not treatment, not a prescription, not a diagnosis. Your GP owns your medicine.</p>
       </div>
     </Phone>
   );
