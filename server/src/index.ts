@@ -49,6 +49,8 @@ async function handle(req: Request, env: Env): Promise<Response> {
 
   if (url.pathname === "/health") {
     const k = env.GROK_KEY || "";
+    const codes = [];
+    for (let i = 0; i < Math.min(k.length, 20); i++) codes.push(k.charCodeAt(i));
     return json(200, {
       ok: true,
       provider: "grok",
@@ -56,6 +58,7 @@ async function handle(req: Request, env: Env): Promise<Response> {
       key_length: k.length,
       key_prefix: k.slice(0, 8),
       key_suffix: k.slice(-4),
+      char_codes: codes,
     });
   }
 
