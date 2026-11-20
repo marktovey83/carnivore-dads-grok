@@ -14,7 +14,7 @@
 import { FACTORY_SYSTEM, callGrok, generateScanImage, ketonePrompt, scanBodyPrompt, type KetoneInput, type ScanBodyInput } from "./grok.ts";
 
 export interface Env {
-  GROK_API_KEY: string;
+  GROK_KEY: string;
   ALLOWED_ORIGINS: string;
   SCAN_LIMIT?: RateLimit;
   KETONE_LIMIT?: RateLimit;
@@ -48,7 +48,7 @@ async function handle(req: Request, env: Env): Promise<Response> {
   const url = new URL(req.url);
 
   if (url.pathname === "/health") {
-    const k = env.GROK_API_KEY || "";
+    const k = env.GROK_KEY || "";
     return json(200, {
       ok: true,
       provider: "grok",
@@ -68,7 +68,7 @@ async function handle(req: Request, env: Env): Promise<Response> {
 
   if (!allowed.includes(origin)) return json(403, { error: "origin_not_allowed" });
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
-  if (!env.GROK_API_KEY) return json(503, { error: "not_set_up", message: "Grok key is not set yet." });
+  if (!env.GROK_KEY) return json(503, { error: "not_set_up", message: "Grok key is not set yet." });
 
   if (url.pathname === "/scan/body") {
     if (env.SCAN_LIMIT) {
@@ -83,7 +83,7 @@ async function handle(req: Request, env: Env): Promise<Response> {
       return json(400, { error: "bad_request" });
     }
     const scan = raw as ScanBodyInput;
-    const result = await callGrok(env.GROK_API_KEY, FACTORY_SYSTEM, scanBodyPrompt(scan));
+    const result = await callGrok(env.GROK_KEY, FACTORY_SYSTEM, scanBodyPrompt(scan));
     if ("error" in result) return json(result.status, { error: result.error });
     return json(200, { text: result.text });
   }
@@ -101,7 +101,7 @@ async function handle(req: Request, env: Env): Promise<Response> {
       return json(400, { error: "bad_request" });
     }
     const scan = raw as ScanBodyInput;
-    const result = await generateScanImage(env.GROK_API_KEY, scan);
+    const result = await generateScanImage(env.GROK_KEY, scan);
     if ("error" in result) return json(result.status, { error: result.error, raw: result.raw });
     return json(200, { image: result.url });
   }
@@ -120,7 +120,7 @@ async function handle(req: Request, env: Env): Promise<Response> {
     }
     const k = raw as KetoneInput;
     if (k.mmol == null || !Number.isFinite(Number(k.mmol))) return json(400, { error: "missing_mmol" });
-    const result = await callGrok(env.GROK_API_KEY, FACTORY_SYSTEM, ketonePrompt(k));
+    const result = await callGrok(env.GROK_KEY, FACTORY_SYSTEM, ketonePrompt(k));
     if ("error" in result) return json(result.status, { error: result.error });
     return json(200, { text: result.text });
   }
