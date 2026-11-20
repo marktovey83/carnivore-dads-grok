@@ -1,6 +1,5 @@
 # Carnivore Dads server on Cloudflare Workers — Grok only.
-# The Grok key is a secret, never in this file:
-#   npx wrangler secret put GROK_API_KEY
+# TEMPORARY: key is in vars for testing. Rotate after this works.
 name = "carnivore-dads-server"
 main = "src/index.ts"
 compatibility_date = "2026-10-01"
@@ -10,6 +9,8 @@ preview_urls = false
 [vars]
 # The sites allowed to call the server: the live app, and local testing.
 ALLOWED_ORIGINS = "https://marktovey83.github.io,http://localhost:5173,http://localhost:8123"
+# TEMPORARY TEST KEY — replace with secret after image works
+GROK_KEY = "REPLACE_WITH_YOUR_KEY"
 
 # At most 6 scan body calls a minute from one connection.
 [[ratelimits]]
